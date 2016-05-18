@@ -1,7 +1,7 @@
 import sublime, sublime_plugin
 import os.path
 
-# Get the views according to the 'list_mode' argument 
+# Get the views according to the 'list_mode' argument
 # on key bindings file (aka keyboard shorcuts)
 def getViews(self, list_mode):
     if list_mode == "active_group":
@@ -9,24 +9,24 @@ def getViews(self, list_mode):
 
     if list_mode == "window":
         views = self.window.views()
-        
+
     (_, current) = self.window.get_view_index(self.window.active_view())
-    return views
+    return (views, current)
 
 class OpenFileListCommand(sublime_plugin.WindowCommand):
     settings = None
     def run(self, list_mode):
         # Load settings.
-        if self.settings == None:
+        if self.settings is None:
             self.settings = sublime.load_settings("OpenFileList.sublime-settings")
 
         # Get the views:
-        views = getViews(self, list_mode)
+        views, current = getViews(self, list_mode)
 
         # Fallback: if current group has no views,
         # then list all views in current window
-        if len(views) < 1 and self.settings.get('list_by_window_fallback') == True:
-            views = getViews(self, "window")
+        if len(views) < 1 and self.settings.get('list_by_window_fallback') is True:
+            views, current = getViews(self, "window")
 
         names = []
         current_index = False
@@ -47,17 +47,17 @@ class OpenFileListCommand(sublime_plugin.WindowCommand):
             names.append([view_name, view_path])
 
         # Delete current view from arrays:
-        if current_index is not False and self.settings.get('skip_current_file') == True:
+        if current_index is not False and self.settings.get('skip_current_file') is True:
             del views[current_index]
             del names[current_index]
         else:
             names[current_index][0] = self.settings.get('mark_current_file_char') + " " + names[current_index][0]
- 
+
         def on_done(index):
             if index >= 0:
                 self.window.focus_view(views[index])
             else:
-                self.window.focus_view(views[current])
+                self.window.focus_view(views[self.current])
 
         if int(sublime.version()) > 3000:
             self.window.show_quick_panel(names, on_done, sublime.MONOSPACE_FONT, current, on_done)
